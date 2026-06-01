@@ -1,6 +1,4 @@
-#include <iostream>
-#include <string>
-using namespace std;
+#include "Item-Search-Management.hpp"
 
 // =============================================
 // Task 4: Item Search and Management Module
@@ -8,297 +6,286 @@ using namespace std;
 // Ordered by Item ID
 // =============================================
 
-const int MAX_ITEMS = 100;
-
-// Node struct for BST
-// Each node stores one item and its warehouse location
-struct ItemNode {
-    int       itemID;
-    string    itemName;
-    string    zone;
-    string    aisle;
-    int       shelf;
-    ItemNode* left;
-    ItemNode* right;
-
-    ItemNode(int id, string name, string z, string a, int s)
-        : itemID(id), itemName(name), zone(z), aisle(a), shelf(s),
-          left(nullptr), right(nullptr) {}
-};
-
 // =============================================
-// Binary Search Tree class
+// ItemBST — Private Helper Implementations
 // =============================================
-class ItemBST {
-private:
-    ItemNode* root;
-    int       itemCount;
 
-    // Helper: insert recursively
-    ItemNode* insertHelper(ItemNode* node, int id, string name, string zone, string aisle, int shelf) {
-        if (node == nullptr) {
-            itemCount++;
-            return new ItemNode(id, name, zone, aisle, shelf);
-        }
-        if (id < node->itemID) {
-            node->left = insertHelper(node->left, id, name, zone, aisle, shelf);
-        }
-        else if (id > node->itemID) {
-            node->right = insertHelper(node->right, id, name, zone, aisle, shelf);
-        }
-        else {
-            // Duplicate ID
-            cout << "\nItem ID " << id << " already exists. Use update instead.\n";
-        }
-        return node;
+// Helper: insert recursively
+ItemNode* ItemBST::insertHelper(ItemNode* node, int id, string name, string zone, string aisle, int shelf) {
+    if (node == nullptr) {
+        itemCount++;
+        return new ItemNode(id, name, zone, aisle, shelf);
     }
-
-    // Helper: find the minimum node (used in delete)
-    ItemNode* findMin(ItemNode* node) {
-        while (node->left != nullptr) {
-            node = node->left;
-        }
-        return node;
+    if (id < node->itemID) {
+        node->left = insertHelper(node->left, id, name, zone, aisle, shelf);
     }
+    else if (id > node->itemID) {
+        node->right = insertHelper(node->right, id, name, zone, aisle, shelf);
+    }
+    else {
+        // Duplicate ID — not allowed
+        cout << "\nItem ID " << id << " already exists. Use update instead.\n";
+    }
+    return node;
+}
 
-    // Helper: delete recursively
-    ItemNode* deleteHelper(ItemNode* node, int id, bool& found) {
-        if (node == nullptr) {
+// Helper: find the minimum node (used in delete)
+ItemNode* ItemBST::findMin(ItemNode* node) {
+    while (node->left != nullptr) {
+        node = node->left;
+    }
+    return node;
+}
+
+// Helper: delete recursively
+ItemNode* ItemBST::deleteHelper(ItemNode* node, int id, bool& found) {
+    if (node == nullptr) {
+        return nullptr;
+    }
+    if (id < node->itemID) {
+        node->left = deleteHelper(node->left, id, found);
+    }
+    else if (id > node->itemID) {
+        node->right = deleteHelper(node->right, id, found);
+    }
+    else {
+        found = true;
+
+        // Case 1: no children
+        if (node->left == nullptr && node->right == nullptr) {
+            delete node;
+            itemCount--;
             return nullptr;
         }
-        if (id < node->itemID) {
-            node->left = deleteHelper(node->left, id, found);
+        // Case 2: only right child
+        else if (node->left == nullptr) {
+            ItemNode* temp = node->right;
+            delete node;
+            itemCount--;
+            return temp;
         }
-        else if (id > node->itemID) {
-            node->right = deleteHelper(node->right, id, found);
+        // Case 2: only left child
+        else if (node->right == nullptr) {
+            ItemNode* temp = node->left;
+            delete node;
+            itemCount--;
+            return temp;
         }
+        // Case 3: two children — replace with in-order successor
         else {
-            found = true;
-
-            // Case 1: no children
-            if (node->left == nullptr && node->right == nullptr) {
-                delete node;
-                itemCount--;
-                return nullptr;
-            }
-            // Case 2: one child
-            else if (node->left == nullptr) {
-                ItemNode* temp = node->right;
-                delete node;
-                itemCount--;
-                return temp;
-            }
-            else if (node->right == nullptr) {
-                ItemNode* temp = node->left;
-                delete node;
-                itemCount--;
-                return temp;
-            }
-            // Case 3: two children — replace with in-order successor
-            else {
-                ItemNode* successor   = findMin(node->right);
-                node->itemID   = successor->itemID;
-                node->itemName = successor->itemName;
-                node->zone     = successor->zone;
-                node->aisle    = successor->aisle;
-                node->shelf    = successor->shelf;
-                bool dummy = false;
-                node->right = deleteHelper(node->right, successor->itemID, dummy);
-            }
-        }
-        return node;
-    }
-
-    // Helper: in-order traversal (sorted by ID)
-    void inOrderHelper(ItemNode* node, int& count) {
-        if (node == nullptr) return;
-        inOrderHelper(node->left, count);
-        count++;
-        cout << "  " << count << ". Item ID: " << node->itemID
-             << "  |  Name: " << node->itemName
-             << "  |  Location: Zone " << node->zone
-             << ", Aisle " << node->aisle
-             << ", Shelf " << node->shelf << "\n";
-        inOrderHelper(node->right, count);
-    }
-
-    // Helper: search by name (traverses whole tree)
-    void searchByNameHelper(ItemNode* node, string name, bool& found) {
-        if (node == nullptr) return;
-        searchByNameHelper(node->left, name, found);
-
-        // Case-insensitive compare
-        string nodeName  = toLowerCase(node->itemName);
-        string searchKey = toLowerCase(name);
-
-        if (nodeName == searchKey) {
-            found = true;
-            cout << "\n  Item found!\n";
-            printItem(node);
-        }
-        searchByNameHelper(node->right, name, found);
-    }
-
-    // Helper: update node by ID
-    ItemNode* updateHelper(ItemNode* node, int id, bool& found) {
-        if (node == nullptr) return nullptr;
-        if (id < node->itemID) {
-            updateHelper(node->left, id, found);
-        }
-        else if (id > node->itemID) {
-            updateHelper(node->right, id, found);
-        }
-        else {
-            found = true;
-            string newName, newZone, newAisle;
-            int    newShelf;
-
-            cout << "\nCurrent details:\n";
-            printItem(node);
-
-            cout << "\nEnter new item name    : ";
-            cin.ignore();
-            getline(cin, newName);
-            cout << "Enter new zone         : ";
-            getline(cin, newZone);
-            cout << "Enter new aisle        : ";
-            getline(cin, newAisle);
-            cout << "Enter new shelf number : ";
-            cin >> newShelf;
-
-            node->itemName = newName;
-            node->zone     = newZone;
-            node->aisle    = newAisle;
-            node->shelf    = newShelf;
-
-            cout << "\nItem ID " << id << " updated successfully.\n";
-        }
-        return node;
-    }
-
-    // Helper: convert string to lowercase
-    string toLowerCase(string input) {
-        string result = "";
-        for (int i = 0; i < (int)input.length(); i++) {
-            char c = input[i];
-            if (c >= 'A' && c <= 'Z') c = c + 32;
-            result += c;
-        }
-        return result;
-    }
-
-    // Helper: delete all nodes (destructor)
-    void destroyTree(ItemNode* node) {
-        if (node == nullptr) return;
-        destroyTree(node->left);
-        destroyTree(node->right);
-        delete node;
-    }
-
-    // Helper: print a single item
-    void printItem(ItemNode* node) {
-        cout << "  Item ID  : " << node->itemID   << "\n"
-             << "  Name     : " << node->itemName << "\n"
-             << "  Zone     : " << node->zone     << "\n"
-             << "  Aisle    : " << node->aisle    << "\n"
-             << "  Shelf    : " << node->shelf    << "\n";
-    }
-
-public:
-    ItemBST() : root(nullptr), itemCount(0) {}
-
-    ~ItemBST() {
-        destroyTree(root);
-    }
-
-    bool isEmpty() { return root == nullptr; }
-    int  getCount() { return itemCount; }
-
-    // Insert a new item into the BST
-    void insertItem(int id, string name, string zone, string aisle, int shelf) {
-        root = insertHelper(root, id, name, zone, aisle, shelf);
-    }
-
-    // Search by Item ID (BST search — O log n)
-    void searchByID(int id) {
-        if (isEmpty()) {
-            cout << "\nNo items in the system.\n";
-            return;
-        }
-
-        ItemNode* current = root;
-        while (current != nullptr) {
-            if (id == current->itemID) {
-                cout << "\n  Item found!\n";
-                printItem(current);
-                return;
-            }
-            else if (id < current->itemID) {
-                current = current->left;
-            }
-            else {
-                current = current->right;
-            }
-        }
-        cout << "\nItem ID " << id << " not found.\n";
-    }
-
-    // Search by item name (full tree scan)
-    void searchByName(string name) {
-        if (isEmpty()) {
-            cout << "\nNo items in the system.\n";
-            return;
-        }
-        bool found = false;
-        searchByNameHelper(root, name, found);
-        if (!found) {
-            cout << "\nNo item with name \"" << name << "\" found.\n";
+            ItemNode* successor = findMin(node->right);
+            node->itemID   = successor->itemID;
+            node->itemName = successor->itemName;
+            node->zone     = successor->zone;
+            node->aisle    = successor->aisle;
+            node->shelf    = successor->shelf;
+            bool dummy = false;
+            node->right = deleteHelper(node->right, successor->itemID, dummy);
         }
     }
+    return node;
+}
 
-    // Update item details by ID
-    void updateItem(int id) {
-        if (isEmpty()) {
-            cout << "\nNo items in the system.\n";
-            return;
-        }
-        bool found = false;
-        updateHelper(root, id, found);
-        if (!found) {
-            cout << "\nItem ID " << id << " not found.\n";
-        }
-    }
+// Helper: in-order traversal (sorted by ID)
+void ItemBST::inOrderHelper(ItemNode* node, int& count) {
+    if (node == nullptr) return;
+    inOrderHelper(node->left, count);
+    count++;
+    cout << "  " << count << ". Item ID: " << node->itemID
+         << "  |  Name: "     << node->itemName
+         << "  |  Location: Zone " << node->zone
+         << ", Aisle "        << node->aisle
+         << ", Shelf "        << node->shelf << "\n";
+    inOrderHelper(node->right, count);
+}
 
-    // Delete item by ID
-    void deleteItem(int id) {
-        if (isEmpty()) {
-            cout << "\nNo items in the system.\n";
-            return;
-        }
-        bool found = false;
-        root = deleteHelper(root, id, found);
-        if (found) {
-            cout << "\nItem ID " << id << " deleted successfully.\n";
-        }
-        else {
-            cout << "\nItem ID " << id << " not found.\n";
-        }
-    }
+// Helper: search by name (traverses whole tree)
+void ItemBST::searchByNameHelper(ItemNode* node, string name, bool& found) {
+    if (node == nullptr) return;
+    searchByNameHelper(node->left, name, found);
 
-    // Display all items sorted by ID (in-order)
-    void displayAll() {
-        if (isEmpty()) {
-            cout << "\nNo items in the system.\n";
-            return;
-        }
-        cout << "\nAll Items (sorted by ID) — Total: " << itemCount << "\n";
-        int count = 0;
-        inOrderHelper(root, count);
+    // Case-insensitive compare
+    string nodeName  = toLowerCase(node->itemName);
+    string searchKey = toLowerCase(name);
+
+    if (nodeName == searchKey) {
+        found = true;
+        cout << "\n  Item found!\n";
+        printItem(node);
     }
-};
+    searchByNameHelper(node->right, name, found);
+}
+
+// Helper: update node by ID
+ItemNode* ItemBST::updateHelper(ItemNode* node, int id, bool& found) {
+    if (node == nullptr) return nullptr;
+    if (id < node->itemID) {
+        updateHelper(node->left, id, found);
+    }
+    else if (id > node->itemID) {
+        updateHelper(node->right, id, found);
+    }
+    else {
+        found = true;
+        string newName, newZone, newAisle;
+        int    newShelf;
+
+        cout << "\nCurrent details:\n";
+        printItem(node);
+
+        cout << "\nEnter new item name    : ";
+        cin.ignore();
+        getline(cin, newName);
+        cout << "Enter new zone         : ";
+        getline(cin, newZone);
+        cout << "Enter new aisle        : ";
+        getline(cin, newAisle);
+        cout << "Enter new shelf number : ";
+        cin >> newShelf;
+
+        node->itemName = newName;
+        node->zone     = newZone;
+        node->aisle    = newAisle;
+        node->shelf    = newShelf;
+
+        cout << "\nItem ID " << id << " updated successfully.\n";
+    }
+    return node;
+}
+
+// Helper: convert string to lowercase
+string ItemBST::toLowerCase(string input) {
+    string result = "";
+    for (int i = 0; i < (int)input.length(); i++) {
+        char c = input[i];
+        if (c >= 'A' && c <= 'Z') c = c + 32;
+        result += c;
+    }
+    return result;
+}
+
+// Helper: delete all nodes (destructor helper)
+void ItemBST::destroyTree(ItemNode* node) {
+    if (node == nullptr) return;
+    destroyTree(node->left);
+    destroyTree(node->right);
+    delete node;
+}
+
+// Helper: print a single item's details
+void ItemBST::printItem(ItemNode* node) {
+    cout << "  Item ID  : " << node->itemID   << "\n"
+         << "  Name     : " << node->itemName << "\n"
+         << "  Zone     : " << node->zone     << "\n"
+         << "  Aisle    : " << node->aisle    << "\n"
+         << "  Shelf    : " << node->shelf    << "\n";
+}
 
 // =============================================
-// Menu
+// ItemBST — Public Method Implementations
+// =============================================
+
+// Constructor
+ItemBST::ItemBST() : root(nullptr), itemCount(0) {}
+
+// Destructor
+ItemBST::~ItemBST() {
+    destroyTree(root);
+}
+
+// Check if the BST is empty
+bool ItemBST::isEmpty() {
+    return root == nullptr;
+}
+
+// Get current item count
+int ItemBST::getCount() {
+    return itemCount;
+}
+
+// Insert a new item into the BST
+void ItemBST::insertItem(int id, string name, string zone, string aisle, int shelf) {
+    root = insertHelper(root, id, name, zone, aisle, shelf);
+}
+
+// Search by Item ID — O(log n) BST traversal
+void ItemBST::searchByID(int id) {
+    if (isEmpty()) {
+        cout << "\nNo items in the system.\n";
+        return;
+    }
+    ItemNode* current = root;
+    while (current != nullptr) {
+        if (id == current->itemID) {
+            cout << "\n  Item found!\n";
+            printItem(current);
+            return;
+        }
+        else if (id < current->itemID) {
+            current = current->left;
+        }
+        else {
+            current = current->right;
+        }
+    }
+    cout << "\nItem ID " << id << " not found.\n";
+}
+
+// Search by item name — full tree scan
+void ItemBST::searchByName(string name) {
+    if (isEmpty()) {
+        cout << "\nNo items in the system.\n";
+        return;
+    }
+    bool found = false;
+    searchByNameHelper(root, name, found);
+    if (!found) {
+        cout << "\nNo item with name \"" << name << "\" found.\n";
+    }
+}
+
+// Update item details by ID
+void ItemBST::updateItem(int id) {
+    if (isEmpty()) {
+        cout << "\nNo items in the system.\n";
+        return;
+    }
+    bool found = false;
+    updateHelper(root, id, found);
+    if (!found) {
+        cout << "\nItem ID " << id << " not found.\n";
+    }
+}
+
+// Delete item by ID
+void ItemBST::deleteItem(int id) {
+    if (isEmpty()) {
+        cout << "\nNo items in the system.\n";
+        return;
+    }
+    bool found = false;
+    root = deleteHelper(root, id, found);
+    if (found) {
+        cout << "\nItem ID " << id << " deleted successfully.\n";
+    }
+    else {
+        cout << "\nItem ID " << id << " not found.\n";
+    }
+}
+
+// Display all items sorted by ID using in-order traversal
+void ItemBST::displayAll() {
+    if (isEmpty()) {
+        cout << "\nNo items in the system.\n";
+        return;
+    }
+    cout << "\nAll Items (sorted by ID) — Total: " << itemCount << "\n";
+    int count = 0;
+    inOrderHelper(root, count);
+}
+
+// =============================================
+// Menu display function
 // =============================================
 void showMenu() {
     cout << "\n=====================================\n";
