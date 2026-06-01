@@ -15,7 +15,7 @@ enum RobotStatus {
 
 // Robot struct
 struct Robot {
-    int robotID;
+    string robotID;
     string robotName;
     RobotStatus status;
     int currentTaskID;
@@ -25,7 +25,7 @@ struct Robot {
 // Assignment struct
 struct Assignment {
     int taskID;
-    int robotID;
+    string robotID;
     string robotName;
 };
 
@@ -77,15 +77,25 @@ void enqueueRobot() {
     if (isFull()) {
         cout << "\nRobot queue is full Cannot add more robots.\n";
         return;
+
     }
-    int id;
+    string id;
     string name;
 
     cout << "\nEnter robot ID: ";
-    cin >> id;
+    cin >> id;  //will read the whole number only then \n
     
     cout << "Enter robot name: ";
-    cin >> name;
+    cin.ignore(); // to make the getline ignore the \n without it it will leave the robot name 
+    getline(cin, name); // will read the robot whole name with space
+
+    // robot id duplication checker
+    for (int i = 0; i < robotCount; i++) {
+        if (robotQueue[i].robotID == id) {
+            cout << "\nRobot ID already exists Please use a different ID.\n";
+            return;
+        }
+    }
 
     // If this is the first robot which is in the front starts at index 0
     if (queueFront == -1) {
@@ -145,7 +155,7 @@ void updateRobotStatus() {
         return;
     }
 
-    int id;
+    string id;
     int statusChoice;
     bool found = false;
 
@@ -250,7 +260,7 @@ void completeRobotTask() {
         return;
     }
 
-    int id;
+    string id;
     bool found = false;
     cout << "\nEnter robot ID that completed the task: ";
     cin >> id;
