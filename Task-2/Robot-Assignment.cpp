@@ -1,33 +1,4 @@
-#include <iostream>
-#include <string>
-using namespace std;
-
-// Maximum number of robots and assignment records
-const int MAX_ROBOTS = 10;
-const int MAX_ASSIGNMENTS = 50;
-
-// Robot status enum enumeration is to name vlaues to use later for choice
-enum RobotStatus {
-    AVAILABLE,
-    BUSY,
-    MAINTENANCE
-};
-
-// Robot struct
-struct Robot {
-    string robotID;
-    string robotName;
-    RobotStatus status;
-    int currentTaskID;
-    int totalTasksAssigned;
-};
-
-// Assignment struct
-struct Assignment {
-    int taskID;
-    string robotID;
-    string robotName;
-};
+#include "Robot-Assignment.hpp"
 
 // Circular queue array for robots and assignment history array
 Robot robotQueue[MAX_ROBOTS];
@@ -201,7 +172,7 @@ void updateRobotStatus() {
 
 }
 
-// Assign task using circular queue rotation
+
 // Assign task using circular queue rotation
 void assignTask() {
     if (isEmpty()) {
@@ -372,4 +343,5 @@ int main() {
     } while (choice != 0);
 
     return 0;
+    
 }
