@@ -1,226 +1,194 @@
-//  TASK 1: ORDER MANAGEMENT MODULE
+#include "Order-Management.hpp"
+#include "Robot-Assignment.hpp"
 
-#include <iostream>
-#include <string>
-using namespace std;
 
-// Order status values
-enum OrderStatus {
-    PENDING,
-    PROCESSING,
-    COMPLETED
-};
+// Global containers — accessed by Task 2 integration
+OrderQueue     pendingQueue;
+ProcessingList processingList;
+CompletedList  completedList;
 
+// Helper 
 string statusLabel(OrderStatus s) {
     if (s == PENDING)    return "PENDING";
     if (s == PROCESSING) return "PROCESSING";
     return "COMPLETED";
 }
 
-// Order struct — used as a node in all three containers
-struct Order {
-    int         orderID;
-    string      customerName;
-    string      itemName;
-    OrderStatus status;
-    Order*      next;
+// OrderQueue 
+OrderQueue::OrderQueue() : front(nullptr), rear(nullptr), size(0), nextID(1) {}
 
-    Order(int id, string cName, string iName)
-        : orderID(id), customerName(cName),
-          itemName(iName), status(PENDING), next(nullptr) {}
-};
-
-//  OrderQueue — pending orders (FIFO linked-list queue)
-const int MAX_QUEUE = 10;
-
-class OrderQueue {
-private:
-    Order* front;
-    Order* rear;
-    int    size;
-    int    nextID;
-
-public:
-    OrderQueue() : front(nullptr), rear(nullptr), size(0), nextID(1) {}
-
-    ~OrderQueue() {
-        while (front != nullptr) {
-            Order* temp = front;
-            front = front->next;
-            delete temp;
-        }
+OrderQueue::~OrderQueue() {
+    while (front != nullptr) {
+        Order* temp = front;
+        front = front->next;
+        delete temp;
     }
+}
 
-    bool isEmpty() { return front == nullptr; }
-    int  getSize() { return size; }
+bool OrderQueue::isEmpty() { return front == nullptr; }
+int  OrderQueue::getSize() { return size; }
 
-    // Add a new order to the back of the queue (status: PENDING)
-    void enqueue(string customerName, string itemName) {
-        if (size >= MAX_QUEUE) {
-            cout << "\nSystem overload. Queue is full (" << MAX_QUEUE << "/" << MAX_QUEUE << " orders)."
-                 << "\n  Order for " << customerName << " could not be accepted."
-                 << "\n  Please wait until current orders are processed.\n";
-            return;
-        }
-        Order* newOrder = new Order(nextID++, customerName, itemName);
-        if (isEmpty()) {
-            front = newOrder;
-            rear  = newOrder;
-        } else {
-            rear->next = newOrder;
-            rear       = newOrder;
-        }
-        size++;
-        cout << "\nOrder #" << newOrder->orderID << " received."
-             << "\n  Customer : " << customerName
-             << "\n  Item     : " << itemName
-             << "\n  Status   : " << statusLabel(newOrder->status) << "\n";
+void OrderQueue::enqueue(string customerName, string itemName) {
+    if (size >= MAX_QUEUE) {
+        cout << "\nSystem overload. Queue is full (" << MAX_QUEUE << "/" << MAX_QUEUE << " orders)."
+             << "\n  Order for " << customerName << " could not be accepted."
+             << "\n  Please wait until current orders are processed.\n";
+        return;
     }
-
-    // Remove front order and return it — caller owns the pointer
-    // Status becomes PROCESSING as it leaves the queue
-    Order* dequeue() {
-        if (isEmpty()) return nullptr;
-        Order* order  = front;
-        front         = front->next;
-        if (front == nullptr) rear = nullptr;
-        order->next   = nullptr;
-        order->status = PROCESSING;
-        size--;
-        return order;
+    Order* newOrder = new Order(nextID++, customerName, itemName);
+    if (isEmpty()) {
+        front = newOrder;
+        rear  = newOrder;
+    } else {
+        rear->next = newOrder;
+        rear       = newOrder;
     }
+    size++;
+    cout << "\nOrder #" << newOrder->orderID << " received."
+         << "\n  Customer : " << customerName
+         << "\n  Item     : " << itemName
+         << "\n  Status   : " << statusLabel(newOrder->status) << "\n";
+}
 
-    void displayPending() {
-        if (isEmpty()) {
-            cout << "\nNo pending orders in the queue.\n";
-            return;
-        }
-        cout << "\nPending orders (" << size << "):\n";
-        Order* current  = front;
-        int    position = 1;
-        while (current != nullptr) {
-            cout << "  " << position++ << ". Order #" << current->orderID
-                 << "  |  " << current->customerName
-                 << "  |  " << current->itemName
-                 << "  |  Status: " << statusLabel(current->status) << "\n";
-            current = current->next;
-        }
+Order* OrderQueue::dequeue() {
+    if (isEmpty()) return nullptr;
+    Order* order  = front;
+    front         = front->next;
+    if (front == nullptr) rear = nullptr;
+    order->next   = nullptr;
+    order->status = PROCESSING;
+    size--;
+    return order;
+}
+
+void OrderQueue::displayPending() {
+    if (isEmpty()) {
+        cout << "\nNo pending orders in the queue.\n";
+        return;
     }
-};
-
-//  ProcessingList — orders assigned to robots (linked list)
-class ProcessingList {
-private:
-    Order* head;
-    int    size;
-
-public:
-    ProcessingList() : head(nullptr), size(0) {}
-
-    ~ProcessingList() {
-        Order* current = head;
-        while (current != nullptr) {
-            Order* temp = current;
-            current = current->next;
-            delete temp;
-        }
+    cout << "\nPending orders (" << size << "):\n";
+    Order* current  = front;
+    int    position = 1;
+    while (current != nullptr) {
+        cout << "  " << position++ << ". Order #" << current->orderID
+             << "  |  " << current->customerName
+             << "  |  " << current->itemName
+             << "  |  Status: " << statusLabel(current->status) << "\n";
+        current = current->next;
     }
+}
 
-    bool isEmpty() { return head == nullptr; }
-    int  getSize() { return size; }
+// ProcessingList 
+ProcessingList::ProcessingList() : head(nullptr), size(0) {}
 
-    // Add an order that just left the pending queue
-    void add(Order* order) {
-        order->next = head;
-        head        = order;
-        size++;
+ProcessingList::~ProcessingList() {
+    Order* current = head;
+    while (current != nullptr) {
+        Order* temp = current;
+        current = current->next;
+        delete temp;
     }
+}
 
-    Order* markCompleted(int orderID) {
-        Order* current  = head;
-        Order* previous = nullptr;
-        while (current != nullptr) {
-            if (current->orderID == orderID) {
-                // Unlink from processing list
-                if (previous == nullptr)
-                    head = current->next;
-                else
-                    previous->next = current->next;
-                current->next   = nullptr;
-                current->status = COMPLETED;
-                size--;
-                return current;   // caller owns this pointer
-            }
-            previous = current;
-            current  = current->next;
+bool ProcessingList::isEmpty() { return head == nullptr; }
+int  ProcessingList::getSize() { return size; }
+
+void ProcessingList::add(Order* order) {
+    order->next = head;
+    head        = order;
+    size++;
+}
+
+Order* ProcessingList::markCompleted(int orderID) {
+    Order* current  = head;
+    Order* previous = nullptr;
+    while (current != nullptr) {
+        if (current->orderID == orderID) {
+            if (previous == nullptr)
+                head = current->next;
+            else
+                previous->next = current->next;
+            current->next   = nullptr;
+            current->status = COMPLETED;
+            size--;
+            return current;
         }
-        return nullptr;   // order ID not found
+        previous = current;
+        current  = current->next;
     }
+    return nullptr;
+}
 
-    void displayProcessing() {
-        if (isEmpty()) {
-            cout << "\nNo orders are currently being processed.\n";
-            return;
-        }
-        cout << "\nProcessing orders (" << size << "):\n";
-        Order* current  = head;
-        int    position = 1;
-        while (current != nullptr) {
-            cout << "  " << position++ << ". Order #" << current->orderID
-                 << "  |  " << current->customerName
-                 << "  |  " << current->itemName
-                 << "  |  Status: " << statusLabel(current->status) << "\n";
-            current = current->next;
-        }
+void ProcessingList::displayProcessing() {
+    if (isEmpty()) {
+        cout << "\nNo orders are currently being processed.\n";
+        return;
     }
-};
-
-//  CompletedList — orders fully delivered by robots
-class CompletedList {
-private:
-    Order* head;
-    int    size;
-
-public:
-    CompletedList() : head(nullptr), size(0) {}
-
-    ~CompletedList() {
-        Order* current = head;
-        while (current != nullptr) {
-            Order* temp = current;
-            current = current->next;
-            delete temp;
-        }
+    cout << "\nProcessing orders (" << size << "):\n";
+    Order* current  = head;
+    int    position = 1;
+    while (current != nullptr) {
+        cout << "  " << position++ << ". Order #" << current->orderID
+             << "  |  " << current->customerName
+             << "  |  " << current->itemName
+             << "  |  Status: " << statusLabel(current->status) << "\n";
+        current = current->next;
     }
+}
 
-    bool isEmpty() { return head == nullptr; }
-    int  getSize() { return size; }
+//  CompletedList 
+CompletedList::CompletedList() : head(nullptr), size(0) {}
 
-    void add(Order* order) {
-        order->next = head;
-        head        = order;
-        size++;
+CompletedList::~CompletedList() {
+    Order* current = head;
+    while (current != nullptr) {
+        Order* temp = current;
+        current = current->next;
+        delete temp;
     }
+}
 
-    void displayCompleted() {
-        if (isEmpty()) {
-            cout << "\nNo completed orders yet.\n";
-            return;
-        }
-        cout << "\nCompleted orders (" << size << "):\n";
-        Order* current  = head;
-        int    position = 1;
-        while (current != nullptr) {
-            cout << "  " << position++ << ". Order #" << current->orderID
-                 << "  |  " << current->customerName
-                 << "  |  " << current->itemName
-                 << "  |  Status: " << statusLabel(current->status) << "\n";
-            current = current->next;
-        }
+bool CompletedList::isEmpty() { return head == nullptr; }
+int  CompletedList::getSize() { return size; }
+
+void CompletedList::add(Order* order) {
+    order->next = head;
+    head        = order;
+    size++;
+}
+
+void CompletedList::displayCompleted() {
+    if (isEmpty()) {
+        cout << "\nNo completed orders yet.\n";
+        return;
     }
-};
+    cout << "\nCompleted orders (" << size << "):\n";
+    Order* current  = head;
+    int    position = 1;
+    while (current != nullptr) {
+        cout << "  " << position++ << ". Order #" << current->orderID
+             << "  |  " << current->customerName
+             << "  |  " << current->itemName
+             << "  |  Status: " << statusLabel(current->status) << "\n";
+        current = current->next;
+    }
+}
 
-//  Menu
+//  Called by Task 2 completeRobotTask() 
+void markOrderCompleted(int orderID) {
+    Order* delivered = processingList.markCompleted(orderID);
+    if (delivered == nullptr) {
+        cout << "\n[Task 1] Order #" << orderID << " not found in processing list.\n";
+    } else {
+        completedList.add(delivered);
+        cout << "\n[Task 1] Order #" << delivered->orderID << " automatically marked as COMPLETED."
+             << "\n  Customer : " << delivered->customerName
+             << "\n  Item     : " << delivered->itemName
+             << "\n  Status   : " << statusLabel(delivered->status) << "\n";
+    }
+}
+
+//  Menu 
 void printMenu() {
     cout << "\nOrder Management Module"
          << "\n  1. Add new order"
@@ -228,17 +196,12 @@ void printMenu() {
          << "\n  3. Display pending orders"
          << "\n  4. Display processing orders"
          << "\n  5. Display completed orders"
-         << "\n  6. Mark order as delivered     (PROCESSING -> COMPLETED)"
          << "\n  0. Exit"
          << "\nEnter choice: ";
 }
 
-//  Main
+//  Main 
 int main() {
-    OrderQueue     pendingQueue;
-    ProcessingList processingList;
-    CompletedList  completedList;
-
     int    choice;
     string cName, iName;
 
@@ -253,7 +216,6 @@ int main() {
 
         switch (choice) {
 
-            // Accept a new order 
             case 1:
                 cout << "Enter customer name: ";
                 getline(cin, cName);
@@ -262,67 +224,33 @@ int main() {
                 pendingQueue.enqueue(cName, iName);
                 break;
 
-            //  Move front order PENDING -> PROCESSING 
             case 2: {
                 if (pendingQueue.isEmpty()) {
                     cout << "\nNo orders to process. Queue is empty.\n";
                     break;
                 }
-                Order* order = pendingQueue.dequeue();   // status -> PROCESSING
-
+                Order* order = pendingQueue.dequeue();
                 cout << "\nOrder #" << order->orderID << " assigned to robot."
                      << "\n  Customer : " << order->customerName
                      << "\n  Item     : " << order->itemName
                      << "\n  Status   : " << statusLabel(order->status)
-                     << "\n  Waiting for robot delivery.\n";
-
+                     << "\n  Use Order #" << order->orderID << " as Task ID in Task 2.\n";
                 processingList.add(order);
                 break;
             }
 
-            //  Show pending orders 
             case 3:
                 pendingQueue.displayPending();
                 break;
 
-            //  Show processing orders 
             case 4:
                 processingList.displayProcessing();
                 break;
 
-            // Show completed orders 
             case 5:
                 completedList.displayCompleted();
                 break;
 
-            // Robot finished delivery — PROCESSING -> COMPLETED 
-            case 6: {
-                if (processingList.isEmpty()) {
-                    cout << "\nNo orders are currently being processed.\n";
-                    break;
-                }
-                processingList.displayProcessing();
-
-                int orderID;
-                cout << "\nEnter the Order ID that has been delivered: ";
-                cin >> orderID;
-                cin.ignore();
-
-                Order* delivered = processingList.markCompleted(orderID);
-
-                if (delivered == nullptr) {
-                    cout << "\nOrder #" << orderID << " not found in the processing list.\n";
-                } else {
-                    completedList.add(delivered);
-                    cout << "\nOrder #" << delivered->orderID << " marked as delivered."
-                         << "\n  Customer : " << delivered->customerName
-                         << "\n  Item     : " << delivered->itemName
-                         << "\n  Status   : " << statusLabel(delivered->status) << "\n";
-                }
-                break;
-            }
-
-            //  Exit 
             case 0:
                 cout << "\nShutting down Order Management Module.\n";
                 cout << "  Pending    : " << pendingQueue.getSize()   << "\n";
