@@ -48,10 +48,10 @@ void showMainMenu() {
     cout << "\n=====================================\n";
     cout << "Warehouse Robot Navigation System\n";
     cout << "=====================================\n";
-    cout << "1. Task 1: Order Management\n";
-    cout << "2. Task 2: Robot Assignment\n";
-    cout << "3. Task 3: Robot Navigation and Path Tracking\n";
-    cout << "4. Task 4: Item Search and Management\n";
+    cout << "1. Order Management\n";
+    cout << "2. Robot Assignment\n";
+    cout << "3. Robot Navigation and Path Tracking\n";
+    cout << "4. Item Search and Management\n";
     cout << "5. Warehouse Layout and Navigation\n";
     cout << "0. Exit System\n";
     cout << "Enter choice: ";
