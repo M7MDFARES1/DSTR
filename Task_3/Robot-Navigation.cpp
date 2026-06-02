@@ -1,15 +1,14 @@
-#include <iostream>
-#include <string>
-using namespace std;
+#include "Task3RobotNavigation.hpp"
 
-// Maximum values keep the module simple and avoid built-in containers.
-const int MAX_STEPS = 100;
-const int MAX_LOGS = 200;
+#include <cstddef>
+#include <iostream>
+
+using namespace std;
 
 string toLowerCase(string input) {
     string lowerInput = "";
 
-    for (int i = 0; i < input.length(); i++) {
+    for (size_t i = 0; i < input.length(); i++) {
         char letter = input[i];
 
         if (letter >= 'A' && letter <= 'Z') {
@@ -22,7 +21,6 @@ string toLowerCase(string input) {
     return lowerInput;
 }
 
-// Converts user input to a standard movement name.
 string formatMovement(string input) {
     string lowerInput = toLowerCase(input);
 
@@ -59,7 +57,6 @@ bool isNormalMovement(string movement) {
            movement == "Back";
 }
 
-// Shows the opposite movement needed when the robot returns.
 string getReverseMovement(string movement) {
     if (movement == "Forward") {
         return "Back";
@@ -77,96 +74,79 @@ string getReverseMovement(string movement) {
     return movement;
 }
 
-// Stack implementation using an array.
-// The stack stores only movement steps, not obstacle messages.
-class MovementStack {
-private:
-    string steps[MAX_STEPS];
-    int topIndex;
+MovementStack::MovementStack() {
+    topIndex = -1;
+}
 
-public:
-    MovementStack() {
-        topIndex = -1;
+bool MovementStack::isEmpty() const {
+    return topIndex == -1;
+}
+
+bool MovementStack::isFull() const {
+    return topIndex == MAX_STEPS - 1;
+}
+
+int MovementStack::getSize() const {
+    return topIndex + 1;
+}
+
+bool MovementStack::push(string movement) {
+    if (isFull()) {
+        return false;
     }
 
-    bool isEmpty() {
-        return topIndex == -1;
+    topIndex++;
+    steps[topIndex] = movement;
+    return true;
+}
+
+bool MovementStack::pop(string &movement) {
+    if (isEmpty()) {
+        return false;
     }
 
-    bool isFull() {
-        return topIndex == MAX_STEPS - 1;
+    movement = steps[topIndex];
+    topIndex--;
+    return true;
+}
+
+void MovementStack::displayForwardPath() const {
+    if (isEmpty()) {
+        cout << "\nNo movement steps have been added yet.\n";
+        return;
     }
 
-    int getSize() {
-        return topIndex + 1;
+    cout << "\nForward Path Taken by Robot\n";
+    for (int i = 0; i <= topIndex; i++) {
+        cout << i + 1 << ". " << steps[i] << endl;
+    }
+}
+
+NavigationLog::NavigationLog() {
+    logCount = 0;
+}
+
+bool NavigationLog::addEntry(string message) {
+    if (logCount == MAX_LOGS) {
+        return false;
     }
 
-    bool push(string movement) {
-        if (isFull()) {
-            return false;
-        }
+    entries[logCount] = message;
+    logCount++;
+    return true;
+}
 
-        topIndex++;
-        steps[topIndex] = movement;
-        return true;
+void NavigationLog::displayLog() const {
+    if (logCount == 0) {
+        cout << "\nNavigation log is empty.\n";
+        return;
     }
 
-    bool pop(string &movement) {
-        if (isEmpty()) {
-            return false;
-        }
-
-        movement = steps[topIndex];
-        topIndex--;
-        return true;
+    cout << "\nComplete Navigation Log\n";
+    for (int i = 0; i < logCount; i++) {
+        cout << i + 1 << ". " << entries[i] << endl;
     }
-
-    void displayForwardPath() {
-        if (isEmpty()) {
-            cout << "\nNo movement steps have been added yet.\n";
-            return;
-        }
-
-        cout << "\nForward Path Taken by Robot\n";
-        for (int i = 0; i <= topIndex; i++) {
-            cout << i + 1 << ". " << steps[i] << endl;
-        }
-    }
-};
-
-// Simple navigation log using an array.
-class NavigationLog {
-private:
-    string entries[MAX_LOGS];
-    int logCount;
-
-public:
-    NavigationLog() {
-        logCount = 0;
-    }
-
-    bool addEntry(string message) {
-        if (logCount == MAX_LOGS) {
-            return false;
-        }
-
-        entries[logCount] = message;
-        logCount++;
-        return true;
-    }
-
-    void displayLog() {
-        if (logCount == 0) {
-            cout << "\nNavigation log is empty.\n";
-            return;
-        }
-
-        cout << "\nComplete Navigation Log\n";
-        for (int i = 0; i < logCount; i++) {
-            cout << i + 1 << ". " << entries[i] << endl;
-        }
-    }
-};
+}
 
 void showMenu() {
     cout << "\n=====================================\n";
@@ -181,25 +161,32 @@ void showMenu() {
 }
 
 void addMovementStep(MovementStack &pathStack, NavigationLog &navigationLog, string userInput) {
-    if (pathStack.isFull()) {
-        cout << "\nPath stack is full. No more movements can be added.\n";
-        navigationLog.addEntry("Movement was not added because the path stack is full.");
-        return;
-    }
-
-    string movement;
-
-    movement = formatMovement(userInput);
+    string movement = formatMovement(userInput);
 
     if (movement == "Invalid") {
-        cout << "\nInvalid movement. Please enter Forward, Left, Right, Back, or Obstacle.\n";
-        navigationLog.addEntry("Invalid movement entered: " + userInput);
         return;
     }
 
     if (movement == "Obstacle") {
-        cout << "\nObstacle recorded. Please enter an alternative movement.\n";
-        navigationLog.addEntry("Obstacle detected. Alternative movement is needed.");
+        string previousMovement;
+        string reverseMovement;
+
+        cout << "\nObstacle detected.\n";
+        navigationLog.addEntry("Obstacle detected.");
+
+        if (pathStack.pop(previousMovement)) {
+            reverseMovement = getReverseMovement(previousMovement);
+
+            cout << "Backtracking one step: " << reverseMovement;
+            cout << " (reverse of " << previousMovement << ")" << endl;
+
+            navigationLog.addEntry("Backtracked using " + reverseMovement +
+                                   " (reverse of " + previousMovement + ")");
+        }
+        else {
+            cout << "No previous movement to backtrack from.\n";
+            navigationLog.addEntry("Obstacle found at starting point. No backtracking needed.");
+        }
 
         string alternativeMovement;
 
@@ -207,10 +194,6 @@ void addMovementStep(MovementStack &pathStack, NavigationLog &navigationLog, str
             cout << "Enter alternative movement (Forward, Left, Right, Back): ";
             getline(cin, userInput);
             alternativeMovement = formatMovement(userInput);
-
-            if (!isNormalMovement(alternativeMovement)) {
-                cout << "\nInvalid alternative movement. Try again.\n";
-            }
 
         } while (!isNormalMovement(alternativeMovement));
 
@@ -223,6 +206,12 @@ void addMovementStep(MovementStack &pathStack, NavigationLog &navigationLog, str
             navigationLog.addEntry("Alternative movement was not added because the stack is full.");
         }
 
+        return;
+    }
+
+    if (pathStack.isFull()) {
+        cout << "\nPath stack is full. No more movements can be added.\n";
+        navigationLog.addEntry("Movement was not added because the path stack is full.");
         return;
     }
 
