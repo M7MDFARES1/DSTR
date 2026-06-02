@@ -5,7 +5,7 @@ using namespace std;
 
 namespace task1 {
 #define main task1Main
-#include "Task_1/Order-Management.cpp"
+#include "Order-Management.cpp"
 #undef main
 }
 
@@ -14,7 +14,7 @@ namespace task1 {
 
 namespace task2 {
 #define main task2Main
-#include "Task-2/Robot-Assignment.cpp"
+#include "Robot-Assignment.cpp"
 #undef main
 }
 
@@ -22,7 +22,7 @@ namespace task2 {
 
 namespace task3 {
 #define main task3Main
-#include "Task_3/Robot-Navigation.cpp"
+#include "Robot-Navigation.cpp"
 #undef main
 }
 

@@ -1,10 +1,30 @@
 #include "Item-Search-Management.hpp"
 
+#include <limits>
+
 // =============================================
 // Task 4: Item Search and Management Module
 // Data Structure: Binary Search Tree (BST)
 // Ordered by Item ID
 // =============================================
+
+bool isCancelChoice(int value) {
+    if (value == 0) {
+        cout << "\nCancelled. Returning to Item Search menu.\n";
+        return true;
+    }
+
+    return false;
+}
+
+bool isCancelChoice(string value) {
+    if (value == "0") {
+        cout << "\nCancelled. Returning to Item Search menu.\n";
+        return true;
+    }
+
+    return false;
+}
 
 // =============================================
 // ItemBST — Private Helper Implementations
@@ -133,15 +153,30 @@ ItemNode* ItemBST::updateHelper(ItemNode* node, int id, bool& found) {
         cout << "\nCurrent details:\n";
         printItem(node);
 
-        cout << "\nEnter new item name    : ";
-        cin.ignore();
+        cout << "\nEnter new item name (0 to cancel)    : ";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         getline(cin, newName);
-        cout << "Enter new zone         : ";
+        if (isCancelChoice(newName)) {
+            return node;
+        }
+
+        cout << "Enter new zone (0 to cancel)         : ";
         getline(cin, newZone);
-        cout << "Enter new aisle        : ";
+        if (isCancelChoice(newZone)) {
+            return node;
+        }
+
+        cout << "Enter new aisle (0 to cancel)        : ";
         getline(cin, newAisle);
-        cout << "Enter new shelf number : ";
+        if (isCancelChoice(newAisle)) {
+            return node;
+        }
+
+        cout << "Enter new shelf number (0 to cancel) : ";
         cin >> newShelf;
+        if (isCancelChoice(newShelf)) {
+            return node;
+        }
 
         node->itemName = newName;
         node->zone     = newZone;
@@ -323,17 +358,36 @@ int main() {
 
             case 1:
                 // Add new item
-                cout << "\nEnter item ID     : ";
+                cout << "\nEnter item ID (0 to cancel)     : ";
                 cin >> itemID;
-                cout << "Enter item name   : ";
-                cin.ignore();
+                if (isCancelChoice(itemID)) {
+                    break;
+                }
+
+                cout << "Enter item name (0 to cancel)   : ";
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 getline(cin, itemName);
-                cout << "Enter zone        : ";
+                if (isCancelChoice(itemName)) {
+                    break;
+                }
+
+                cout << "Enter zone (0 to cancel)        : ";
                 getline(cin, zone);
-                cout << "Enter aisle       : ";
+                if (isCancelChoice(zone)) {
+                    break;
+                }
+
+                cout << "Enter aisle (0 to cancel)       : ";
                 getline(cin, aisle);
-                cout << "Enter shelf number: ";
+                if (isCancelChoice(aisle)) {
+                    break;
+                }
+
+                cout << "Enter shelf number (0 to cancel): ";
                 cin >> shelf;
+                if (isCancelChoice(shelf)) {
+                    break;
+                }
 
                 itemTree.insertItem(itemID, itemName, zone, aisle, shelf);
                 cout << "\nItem ID " << itemID << " added successfully.\n";
@@ -342,30 +396,42 @@ int main() {
 
             case 2:
                 // Search by ID
-                cout << "\nEnter item ID to search: ";
+                cout << "\nEnter item ID to search (0 to cancel): ";
                 cin >> itemID;
+                if (isCancelChoice(itemID)) {
+                    break;
+                }
                 itemTree.searchByID(itemID);
                 break;
 
             case 3:
                 // Search by name
-                cout << "\nEnter item name to search: ";
-                cin.ignore();
+                cout << "\nEnter item name to search (0 to cancel): ";
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 getline(cin, itemName);
+                if (isCancelChoice(itemName)) {
+                    break;
+                }
                 itemTree.searchByName(itemName);
                 break;
 
             case 4:
                 // Update item
-                cout << "\nEnter item ID to update: ";
+                cout << "\nEnter item ID to update (0 to cancel): ";
                 cin >> itemID;
+                if (isCancelChoice(itemID)) {
+                    break;
+                }
                 itemTree.updateItem(itemID);
                 break;
 
             case 5:
                 // Delete item
-                cout << "\nEnter item ID to delete: ";
+                cout << "\nEnter item ID to delete (0 to cancel): ";
                 cin >> itemID;
+                if (isCancelChoice(itemID)) {
+                    break;
+                }
                 itemTree.deleteItem(itemID);
                 cout << "Total items in system: " << itemTree.getCount() << "\n";
                 break;

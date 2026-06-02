@@ -14,6 +14,10 @@ string statusLabel(OrderStatus s) {
     return "COMPLETED";
 }
 
+string orderStatusLabel(OrderStatus s) {
+    return statusLabel(s);
+}
+
 // OrderQueue 
 OrderQueue::OrderQueue() : front(nullptr), rear(nullptr), size(0), nextID(1) {}
 
@@ -47,7 +51,7 @@ void OrderQueue::enqueue(string customerName, string itemName) {
     cout << "\nOrder #" << newOrder->orderID << " received."
          << "\n  Customer : " << customerName
          << "\n  Item     : " << itemName
-         << "\n  Status   : " << statusLabel(newOrder->status) << "\n";
+         << "\n  Status   : " << orderStatusLabel(newOrder->status) << "\n";
 }
 
 Order* OrderQueue::dequeue() {
@@ -73,7 +77,7 @@ void OrderQueue::displayPending() {
         cout << "  " << position++ << ". Order #" << current->orderID
              << "  |  " << current->customerName
              << "  |  " << current->itemName
-             << "  |  Status: " << statusLabel(current->status) << "\n";
+             << "  |  Status: " << orderStatusLabel(current->status) << "\n";
         current = current->next;
     }
 }
@@ -131,7 +135,7 @@ void ProcessingList::displayProcessing() {
         cout << "  " << position++ << ". Order #" << current->orderID
              << "  |  " << current->customerName
              << "  |  " << current->itemName
-             << "  |  Status: " << statusLabel(current->status) << "\n";
+             << "  |  Status: " << orderStatusLabel(current->status) << "\n";
         current = current->next;
     }
 }
@@ -169,7 +173,7 @@ void CompletedList::displayCompleted() {
         cout << "  " << position++ << ". Order #" << current->orderID
              << "  |  " << current->customerName
              << "  |  " << current->itemName
-             << "  |  Status: " << statusLabel(current->status) << "\n";
+             << "  |  Status: " << orderStatusLabel(current->status) << "\n";
         current = current->next;
     }
 }
@@ -184,7 +188,7 @@ void markOrderCompleted(int orderID) {
         cout << "\n[Task 1] Order #" << delivered->orderID << " automatically marked as COMPLETED."
              << "\n  Customer : " << delivered->customerName
              << "\n  Item     : " << delivered->itemName
-             << "\n  Status   : " << statusLabel(delivered->status) << "\n";
+             << "\n  Status   : " << orderStatusLabel(delivered->status) << "\n";
     }
 }
 
@@ -233,7 +237,7 @@ int main() {
                 cout << "\nOrder #" << order->orderID << " assigned to robot."
                      << "\n  Customer : " << order->customerName
                      << "\n  Item     : " << order->itemName
-                     << "\n  Status   : " << statusLabel(order->status)
+                     << "\n  Status   : " << orderStatusLabel(order->status)
                      << "\n  Use Order #" << order->orderID << " as Task ID in Task 2.\n";
                 processingList.add(order);
                 break;
