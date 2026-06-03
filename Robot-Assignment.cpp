@@ -54,7 +54,7 @@ void enqueueRobot() {
     string name;
 
     cout << "\nEnter robot ID: ";
-    cin >> id;  //will read the whole number only then \n
+    cin >> id;  
     
     cout << "Enter robot name: ";
     cin.ignore(); // to make the getline ignore the \n without it it will leave the robot name 
