@@ -292,9 +292,7 @@ void WarehouseLayout::task5Menu()
     } while (choice != 0);
 }
 
-// Temporary main function for testing Task 5 alone.
-// Later, when combining with your group, remove this main()
-// and call layout.task5Menu() from the group's main menu.
+
 int main()
 {
     WarehouseLayout layout;
