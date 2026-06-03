@@ -2,12 +2,7 @@
 
 #include <limits>
 
-// =============================================
 // Task 4: Item Search and Management Module
-// Data Structure: Binary Search Tree (BST)
-// Ordered by Item ID
-// =============================================
-
 bool isCancelChoice(int value) {
     if (value == 0) {
         cout << "\nCancelled. Returning to Item Search menu.\n";
@@ -26,11 +21,9 @@ bool isCancelChoice(string value) {
     return false;
 }
 
-// =============================================
 // ItemBST — Private Helper Implementations
-// =============================================
 
-// Helper: insert recursively
+// Helper
 ItemNode* ItemBST::insertHelper(ItemNode* node, int id, string name, string zone, string aisle, int shelf) {
     if (node == nullptr) {
         itemCount++;
@@ -49,7 +42,6 @@ ItemNode* ItemBST::insertHelper(ItemNode* node, int id, string name, string zone
     return node;
 }
 
-// Helper: find the minimum node (used in delete)
 ItemNode* ItemBST::findMin(ItemNode* node) {
     while (node->left != nullptr) {
         node = node->left;
@@ -57,7 +49,6 @@ ItemNode* ItemBST::findMin(ItemNode* node) {
     return node;
 }
 
-// Helper: delete recursively
 ItemNode* ItemBST::deleteHelper(ItemNode* node, int id, bool& found) {
     if (node == nullptr) {
         return nullptr;
@@ -106,7 +97,6 @@ ItemNode* ItemBST::deleteHelper(ItemNode* node, int id, bool& found) {
     return node;
 }
 
-// Helper: in-order traversal (sorted by ID)
 void ItemBST::inOrderHelper(ItemNode* node, int& count) {
     if (node == nullptr) return;
     inOrderHelper(node->left, count);
@@ -119,7 +109,6 @@ void ItemBST::inOrderHelper(ItemNode* node, int& count) {
     inOrderHelper(node->right, count);
 }
 
-// Helper: search by name (traverses whole tree)
 void ItemBST::searchByNameHelper(ItemNode* node, string name, bool& found) {
     if (node == nullptr) return;
     searchByNameHelper(node->left, name, found);
@@ -136,7 +125,6 @@ void ItemBST::searchByNameHelper(ItemNode* node, string name, bool& found) {
     searchByNameHelper(node->right, name, found);
 }
 
-// Helper: update node by ID
 ItemNode* ItemBST::updateHelper(ItemNode* node, int id, bool& found) {
     if (node == nullptr) return nullptr;
     if (id < node->itemID) {
@@ -188,7 +176,6 @@ ItemNode* ItemBST::updateHelper(ItemNode* node, int id, bool& found) {
     return node;
 }
 
-// Helper: convert string to lowercase
 string ItemBST::toLowerCase(string input) {
     string result = "";
     for (int i = 0; i < (int)input.length(); i++) {
@@ -199,7 +186,6 @@ string ItemBST::toLowerCase(string input) {
     return result;
 }
 
-// Helper: delete all nodes (destructor helper)
 void ItemBST::destroyTree(ItemNode* node) {
     if (node == nullptr) return;
     destroyTree(node->left);
@@ -207,7 +193,6 @@ void ItemBST::destroyTree(ItemNode* node) {
     delete node;
 }
 
-// Helper: print a single item's details
 void ItemBST::printItem(ItemNode* node) {
     cout << "  Item ID  : " << node->itemID   << "\n"
          << "  Name     : " << node->itemName << "\n"
@@ -218,7 +203,6 @@ void ItemBST::printItem(ItemNode* node) {
 
 // =============================================
 // ItemBST — Public Method Implementations
-// =============================================
 
 // Constructor
 ItemBST::ItemBST() : root(nullptr), itemCount(0) {}
@@ -319,9 +303,7 @@ void ItemBST::displayAll() {
     inOrderHelper(root, count);
 }
 
-// =============================================
 // Menu display function
-// =============================================
 void showMenu() {
     cout << "\n=====================================\n";
     cout << "Task 4: Item Search and Management\n";
@@ -336,9 +318,7 @@ void showMenu() {
     cout << "Enter choice: ";
 }
 
-// =============================================
 // Main
-// =============================================
 int main() {
     ItemBST itemTree;
     int     choice;
