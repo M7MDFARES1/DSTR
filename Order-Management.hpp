@@ -5,17 +5,16 @@
 #include <string>
 using namespace std;
 
-// Maximum number of pending orders allowed in the queue
+// Task 1: Order Management Module
+
 const int MAX_QUEUE = 10;
 
-// Order status enum
 enum OrderStatus {
     PENDING,
     PROCESSING,
     COMPLETED
 };
 
-// Order struct — used as a node in all three containers
 struct Order {
     int         orderID;
     string      customerName;
@@ -28,13 +27,13 @@ struct Order {
           itemName(iName), status(PENDING), next(nullptr) {}
 };
 
-// OrderQueue — pending orders (FIFO linked-list queue)
 class OrderQueue {
 private:
     Order* front;
     Order* rear;
     int    size;
     int    nextID;
+
 public:
     OrderQueue();
     ~OrderQueue();
@@ -45,11 +44,11 @@ public:
     void   displayPending();
 };
 
-// ProcessingList — orders assigned to robots (linked list)
 class ProcessingList {
 private:
     Order* head;
     int    size;
+
 public:
     ProcessingList();
     ~ProcessingList();
@@ -60,11 +59,11 @@ public:
     void   displayProcessing();
 };
 
-// CompletedList — orders fully delivered by robots (linked list)
 class CompletedList {
 private:
     Order* head;
     int    size;
+
 public:
     CompletedList();
     ~CompletedList();
@@ -74,17 +73,12 @@ public:
     void displayCompleted();
 };
 
-// Global containers — shared across tasks
 extern OrderQueue     pendingQueue;
 extern ProcessingList processingList;
 extern CompletedList  completedList;
 
-// Function declarations
 string statusLabel(OrderStatus s);
 void   printMenu();
+void   markOrderCompleted(int orderID);
 
-// Called by Task 2 completeRobotTask() when robot finishes delivery.
-// Automatically moves order from processing -> completed.
-void markOrderCompleted(int orderID);
-
-#endif // ORDER_MANAGEMENT_HPP
+#endif
