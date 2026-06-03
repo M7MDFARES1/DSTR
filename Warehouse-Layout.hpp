@@ -7,11 +7,11 @@ using namespace std;
 
 struct LocationNode
 {
-    string name; // Example: "Zone A", "Aisle A1", "Shelf 1"
-    string type; // Example: "Root", "Zone", "Aisle", "Shelf"
+    string name; 
+    string type; 
 
-    LocationNode *firstChild;  // First child inside this location
-    LocationNode *nextSibling; // Next location beside this location
+    LocationNode *firstChild;  
+    LocationNode *nextSibling; 
 };
 
 class WarehouseLayout
